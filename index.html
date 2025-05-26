@@ -2,64 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Secure Note</title>
+  <title>현재 시간 (초 단위)</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
-    textarea { width: 100%; height: 300px; }
-    input, button { padding: 0.5rem; margin-top: 0.5rem; width: 100%; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 100px;
+      background: #f7f7f7;
+    }
+    h1 {
+      font-size: 3rem;
+      color: #333;
+    }
+    #clock {
+      font-size: 4rem;
+      color: #007acc;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h2>🔒 Secure Note</h2>
-  <input type="password" id="password" placeholder="Enter password"/>
-  <button onclick="unlock()">Unlock</button>
-  <textarea id="note" placeholder="Your secure note..." disabled></textarea>
-  <button onclick="save()" id="saveBtn" disabled>Save</button>
+  <h1>🕒 현재 시간 (초 단위)</h1>
+  <div id="clock">--:--:--</div>
 
   <script>
-    const noteEl = document.getElementById("note");
-    const passwordEl = document.getElementById("password");
-    const saveBtn = document.getElementById("saveBtn");
-
-    function encrypt(text, password) {
-      return btoa([...text].map((c, i) => String.fromCharCode(c.charCodeAt() ^ password.charCodeAt(i % password.length))).join(''));
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
     }
 
-    function decrypt(text, password) {
-      try {
-        const decoded = atob(text);
-        return [...decoded].map((c, i) => String.fromCharCode(c.charCodeAt() ^ password.charCodeAt(i % password.length))).join('');
-      } catch {
-        return null;
-      }
-    }
-
-    function unlock() {
-      const pw = passwordEl.value;
-      const encrypted = localStorage.getItem("secure_note");
-      if (encrypted) {
-        const decrypted = decrypt(encrypted, pw);
-        if (decrypted !== null) {
-          noteEl.value = decrypted;
-          noteEl.disabled = false;
-          saveBtn.disabled = false;
-        } else {
-          alert("Wrong password or corrupt data.");
-        }
-      } else {
-        // no existing note, allow new input
-        noteEl.disabled = false;
-        saveBtn.disabled = false;
-      }
-    }
-
-    function save() {
-      const pw = passwordEl.value;
-      const encrypted = encrypt(noteEl.value, pw);
-      localStorage.setItem("secure_note", encrypted);
-      alert("Note saved securely!");
-    }
+    setInterval(updateClock, 1000);
+    updateClock(); // 첫 실행
   </script>
 </body>
 </html>
