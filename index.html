@@ -1,58 +1,408 @@
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>카드 게임 - 로그인</title>
+    <title>Bead.im</title>
     <style>
-        body { 
-            font-family: sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            background: #f0f2f5; 
-            color: #333;
-            flex-direction: column;
+        :root {
+            --card-width: 80px;
+            --card-height: 110px;
+            --card-border-radius: 6px;
+            --background-color: #0d4b29;
+            --font-color: #ffffff;
+            --table-color: #0f6c3a;
         }
-        #login-container {
-            padding: 40px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-color);
+            color: var(--font-color);
             text-align: center;
+            padding: 20px;
         }
-        h1 { margin-top: 0; }
-        /* Netlify 위젯 버튼 스타일을 약간 조정할 수 있습니다. */
-        [data-netlify-identity-button] {
-            margin-top: 15px !important;
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        h2 {
+            font-size: 1.2em;
+            margin: 10px 0;
+            min-height: 1.2em; /* 공간 유지 */
+        }
+
+        .game-table {
+            background-color: var(--table-color);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 800px;
+            border: 5px solid #a47a4a;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        .hand {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            min-height: var(--card-height);
+        }
+
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            border: 2px solid #ccc;
+            border-radius: var(--card-border-radius);
+            background-color: white;
+            color: black;
+            font-size: 2.5em;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 3px 3px 7px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .card .rank {
+             position: absolute;
+             top: 5px;
+             left: 8px;
+             font-size: 0.5em;
+        }
+        .card .suit {
+            font-size: 1em;
+        }
+
+        .card.heart, .card.diamond { color: #ff0000; }
+        .card.spade, .card.club { color: #000000; }
+
+        .card.back {
+            background-color: #b02a2a;
+            background-image: repeating-linear-gradient(45deg, #c0392b, #c0392b 10px, #b02a2a 10px, #b02a2a 20px);
+        }
+        
+        .card.back .suit, .card.back .rank {
+            display: none;
+        }
+
+        #community-cards .card {
+            border-color: #ffd700;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: #e67e22;
+            color: white;
+            transition: background-color 0.3s, transform 0.1s;
+            margin: 0 10px;
+        }
+
+        button:hover {
+            background-color: #d35400;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        #game-status {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            min-height: 1.5em; /* 공간 유지 */
+            color: #f1c40f;
         }
     </style>
-    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-    <div id="login-container">
-        <h1>♠️ 트럼프 카드 게임 ♦️</h1>
-        <p>로그인하고 게임을 시작하세요!</p>
-        <div data-netlify-identity-menu></div>
-        <div id="user-status" style="margin-top: 20px; font-weight: bold;"></div>
+
+    <h1>♠️ 텍사스 홀덤 ♦️</h1>
+    <div class="game-table">
+        <h2>컴퓨터 <span id="computer-hand-rank"></span></h2>
+        <div id="computer-hand" class="hand"></div>
+
+        <h2>커뮤니티 카드</h2>
+        <div id="community-cards" class="hand"></div>
+
+        <h2>플레이어 <span id="player-hand-rank"></span></h2>
+        <div id="player-hand" class="hand"></div>
+        
+        <div id="game-status">새 게임을 시작하세요!</div>
+        
+        <div class="actions">
+            <button id="new-game-btn">새 게임</button>
+            <button id="next-step-btn" disabled>다음</button>
+        </div>
     </div>
 
     <script>
-        // 로그인 상태에 따라 다른 메시지를 보여줍니다.
-        const userStatusEl = document.getElementById('user-status');
-        
-        netlifyIdentity.on('login', user => {
-            console.log('Logged in', user);
-            // 로그인이 성공하면 게임 페이지로 이동하는 링크를 보여줍니다.
-            userStatusEl.innerHTML = `환영합니다, ${user.user_metadata.full_name || user.email}님! <br><br> <a href="/game.html">게임 시작하기</a>`;
-            // 또는 자동으로 페이지를 이동시킬 수도 있습니다.
-            // window.location.href = '/game.html';
-        });
+        // DOM 요소 가져오기
+        const playerHandDiv = document.getElementById('player-hand');
+        const computerHandDiv = document.getElementById('computer-hand');
+        const communityCardsDiv = document.getElementById('community-cards');
+        const playerHandRankSpan = document.getElementById('player-hand-rank');
+        const computerHandRankSpan = document.getElementById('computer-hand-rank');
+        const gameStatusDiv = document.getElementById('game-status');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
 
-        netlifyIdentity.on('logout', () => {
-            console.log('Logged out');
-            userStatusEl.innerHTML = '';
-        });
+        // 카드 정의
+        const SUITS = ['♠', '♣', '♥', '♦'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const RANK_VALUES = { 'A': 14, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+
+        // 게임 상태 변수
+        let deck = [];
+        let playerHand = [];
+        let computerHand = [];
+        let communityCards = [];
+        let gameState = 'idle'; // idle, pre-flop, flop, turn, river, showdown
+
+        //--- 게임 로직 함수 ---//
+
+        // 덱 생성
+        function createDeck() {
+            deck = [];
+            for (const suit of SUITS) {
+                for (const rank of RANKS) {
+                    deck.push({ suit, rank, value: RANK_VALUES[rank] });
+                }
+            }
+        }
+
+        // 덱 섞기 (피셔-예이츠 알고리즘)
+        function shuffleDeck() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+        
+        // 카드 렌더링
+        function renderCard(card, container, faceUp = true) {
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('card');
+            
+            const rankDiv = document.createElement('div');
+            rankDiv.classList.add('rank');
+            rankDiv.textContent = card.rank;
+
+            const suitDiv = document.createElement('div');
+            suitDiv.classList.add('suit');
+            suitDiv.textContent = card.suit;
+
+            if (card.suit === '♥') cardDiv.classList.add('heart');
+            if (card.suit === '♦') cardDiv.classList.add('diamond');
+            if (card.suit === '♠') cardDiv.classList.add('spade');
+            if (card.suit === '♣') cardDiv.classList.add('club');
+
+            if (!faceUp) {
+                cardDiv.classList.add('back');
+            }
+            
+            cardDiv.appendChild(rankDiv);
+            cardDiv.appendChild(suitDiv);
+            container.appendChild(cardDiv);
+        }
+
+        // 화면 업데이트
+        function updateBoard() {
+            playerHandDiv.innerHTML = '';
+            computerHandDiv.innerHTML = '';
+            communityCardsDiv.innerHTML = '';
+            
+            playerHand.forEach(card => renderCard(card, playerHandDiv));
+            
+            computerHand.forEach((card, index) => {
+                renderCard(card, computerHandDiv, gameState === 'showdown');
+            });
+            
+            communityCards.forEach(card => renderCard(card, communityCardsDiv));
+        }
+
+        // 새 게임 시작
+        function newGame() {
+            gameState = 'pre-flop';
+            createDeck();
+            shuffleDeck();
+
+            playerHand = [deck.pop(), deck.pop()];
+            computerHand = [deck.pop(), deck.pop()];
+            communityCards = [];
+            
+            playerHandRankSpan.textContent = '';
+            computerHandRankSpan.textContent = '';
+            gameStatusDiv.textContent = "플랍을 보시겠습니까?";
+
+            updateBoard();
+
+            nextStepBtn.disabled = false;
+            newGameBtn.textContent = '새 게임';
+        }
+
+        // 다음 단계 진행
+        function nextStep() {
+            if (gameState === 'pre-flop') { // 플랍 (커뮤니티 카드 3장)
+                gameState = 'flop';
+                communityCards.push(deck.pop(), deck.pop(), deck.pop());
+                gameStatusDiv.textContent = "턴을 보시겠습니까?";
+            } else if (gameState === 'flop') { // 턴 (커뮤니티 카드 1장)
+                gameState = 'turn';
+                communityCards.push(deck.pop());
+                gameStatusDiv.textContent = "리버를 보시겠습니까?";
+            } else if (gameState === 'turn') { // 리버 (커뮤니티 카드 1장)
+                gameState = 'river';
+                communityCards.push(deck.pop());
+                gameStatusDiv.textContent = "결과를 확인하세요!";
+            } else if (gameState === 'river') { // 쇼다운 (결과 발표)
+                gameState = 'showdown';
+                nextStepBtn.disabled = true;
+
+                const playerFullHand = playerHand.concat(communityCards);
+                const computerFullHand = computerHand.concat(communityCards);
+
+                const playerBestHand = evaluateHand(playerFullHand);
+                const computerBestHand = evaluateHand(computerFullHand);
+
+                playerHandRankSpan.textContent = `(${playerBestHand.name})`;
+                computerHandRankSpan.textContent = `(${computerBestHand.name})`;
+                
+                if (playerBestHand.score > computerBestHand.score) {
+                    gameStatusDiv.textContent = "🎉 플레이어 승리! 🎉";
+                } else if (computerBestHand.score > playerBestHand.score) {
+                    gameStatusDiv.textContent = "컴퓨터 승리!";
+                } else {
+                    gameStatusDiv.textContent = "무승부!";
+                }
+            }
+            updateBoard();
+        }
+
+        // 이벤트 리스너
+        newGameBtn.addEventListener('click', newGame);
+        nextStepBtn.addEventListener('click', nextStep);
+
+        //--- 패 순위 판정 로직 ---//
+
+        function evaluateHand(sevenCards) {
+            const allCombinations = getCombinations(sevenCards, 5);
+            let bestHand = { name: '하이 카드', score: 0 };
+
+            for (const combo of allCombinations) {
+                const currentHand = checkHand(combo);
+                if (currentHand.score > bestHand.score) {
+                    bestHand = currentHand;
+                }
+            }
+            return bestHand;
+        }
+
+        function checkHand(fiveCards) {
+            fiveCards.sort((a, b) => b.value - a.value);
+            const values = fiveCards.map(c => c.value);
+            const ranks = fiveCards.map(c => c.rank);
+            const suits = fiveCards.map(c => c.suit);
+
+            const isFlush = new Set(suits).size === 1;
+            const uniqueValues = [...new Set(values)];
+            const isStraight = uniqueValues.length === 5 && (uniqueValues[0] - uniqueValues[4] === 4);
+            const isAceLowStraight = JSON.stringify(uniqueValues.sort((a, b) => a - b)) === JSON.stringify([2, 3, 4, 5, 14]);
+
+            // 랭크별 카드 개수 세기
+            const rankCounts = ranks.reduce((acc, rank) => {
+                acc[rank] = (acc[rank] || 0) + 1;
+                return acc;
+            }, {});
+            const counts = Object.values(rankCounts).sort((a, b) => b - a);
+            const primaryScore = values.reduce((acc, val, i) => acc + val * Math.pow(15, 4 - i), 0);
+            
+            // 1. 스트레이트 플러시 (로열 플러시 포함)
+            if (isStraight && isFlush) {
+                if(values[0] === 14) return { name: '로열 플러시', score: 9000000000000 + primaryScore };
+                return { name: '스트레이트 플러시', score: 8000000000000 + primaryScore };
+            }
+            // 에이스-로우 스트레이트 플러시
+             if (isAceLowStraight && isFlush) {
+                return { name: '스트레이트 플러시 (A-5)', score: 8000000000000 + 50000000000 };
+            }
+
+            // 2. 포카드
+            if (counts[0] === 4) {
+                return { name: '포카드', score: 7000000000000 + primaryScore };
+            }
+
+            // 3. 풀하우스
+            if (counts[0] === 3 && counts[1] === 2) {
+                return { name: '풀하우스', score: 6000000000000 + primaryScore };
+            }
+
+            // 4. 플러시
+            if (isFlush) {
+                return { name: '플러시', score: 5000000000000 + primaryScore };
+            }
+
+            // 5. 스트레이트
+            if (isStraight) {
+                return { name: '스트레이트', score: 4000000000000 + primaryScore };
+            }
+             if (isAceLowStraight) {
+                return { name: '스트레이트 (A-5)', score: 4000000000000 + 50000000000 };
+            }
+
+            // 6. 트리플 (쓰리 오브 어 카인드)
+            if (counts[0] === 3) {
+                return { name: '트리플', score: 3000000000000 + primaryScore };
+            }
+
+            // 7. 투 페어
+            if (counts[0] === 2 && counts[1] === 2) {
+                return { name: '투 페어', score: 2000000000000 + primaryScore };
+            }
+
+            // 8. 원 페어
+            if (counts[0] === 2) {
+                return { name: '원 페어', score: 1000000000000 + primaryScore };
+            }
+
+            // 9. 하이 카드
+            return { name: '하이 카드', score: primaryScore };
+        }
+
+        // 조합(Combination) 생성 함수
+        function getCombinations(array, size) {
+            const result = [];
+            function combination(startIndex, currentCombo) {
+                if (currentCombo.length === size) {
+                    result.push([...currentCombo]);
+                    return;
+                }
+                for (let i = startIndex; i < array.length; i++) {
+                    currentCombo.push(array[i]);
+                    combination(i + 1, currentCombo);
+                    currentCombo.pop();
+                }
+            }
+            combination(0, []);
+            return result;
+        }
     </script>
 </body>
 </html>
