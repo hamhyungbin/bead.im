@@ -37,5 +37,28 @@
     setInterval(updateClock, 1000);
     updateClock(); // 첫 실행
   </script>
+
+    <h1>📝 방문자 정보</h1>
+    <p><strong>IP 주소:</strong> <span id="ip-address">불러오는 중...</span></p>
+    <p><strong>사용자 정보:</strong> <span id="user-agent">불러오는 중...</span></p>
+
+    <script>
+        // IP 주소 가져오기
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ip-address').textContent = data.ip;
+            })
+            .catch(error => {
+                console.error('IP 주소를 가져오는 데 실패했습니다.', error);
+                document.getElementById('ip-address').textContent = '가져올 수 없음';
+            });
+
+        // 사용자 User Agent 정보 가져오기
+        const userAgent = navigator.userAgent;
+        document.getElementById('user-agent').textContent = userAgent;
+    </script>
+
+  
 </body>
 </html>
