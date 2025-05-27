@@ -1,0 +1,42 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게임 화면</title>
+    <style>
+        /* 이전 홀덤 게임의 CSS를 여기에 붙여넣으세요. */
+        body { font-family: sans-serif; padding: 20px; }
+        .user-info { text-align: right; margin-bottom: 20px; }
+    </style>
+    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+    <div class="user-info">
+        <span id="welcome-msg"></span>
+        <button data-netlify-identity-button>로그아웃</button>
+    </div>
+
+    <h1>게임이 시작됩니다!</h1>
+    <p>이곳에 카드 게임 콘텐츠가 표시됩니다.</p>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = netlifyIdentity.currentUser();
+            const welcomeMsg = document.getElementById('welcome-msg');
+            
+            if (user) {
+                // 로그인한 사용자 이름이나 이메일을 환영 메시지에 표시
+                welcomeMsg.textContent = `환영합니다, ${user.user_metadata.full_name || user.email}님!`;
+            } else {
+                // 만약 로그인하지 않은 사용자가 이 페이지에 접근하면 로그인 페이지로 보냅니다.
+                // (아래 5단계에서 서버 레벨에서 차단하므로 이 코드는 보조적인 역할)
+                window.location.href = '/';
+            }
+        });
+
+        // 로그아웃 시 로그인 페이지로 이동
+        netlifyIdentity.on('logout', () => {
+            window.location.href = '/';
+        });
+    </script>
+</body>
+</html>
