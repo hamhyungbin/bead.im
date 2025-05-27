@@ -1,67 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bead</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 100px;
-      background: #f7f7f7;
-    }
-    h1 {
-      font-size: 3rem;
-      color: #333;
-    }
-    #clock {
-      font-size: 4rem;
-      color: #007acc;
-      margin-top: 20px;
-    }
-    strong {
-            color: #0056b3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카드 게임 - 로그인</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: #f0f2f5; 
+            color: #333;
+            flex-direction: column;
+        }
+        #login-container {
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { margin-top: 0; }
+        /* Netlify 위젯 버튼 스타일을 약간 조정할 수 있습니다. */
+        [data-netlify-identity-button] {
+            margin-top: 15px !important;
+        }
+    </style>
+    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <h1>🕒 현재 시간</h1>
-  <div id="clock">--:--:--</div>
-
-  <script>
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
-    }
-
-    setInterval(updateClock, 1000);
-    updateClock(); // 첫 실행
-  </script>
-
-    <h1>📝 방문자 정보</h1>
-    <p><strong>IP 주소:</strong> <span id="ip-address">불러오는 중...</span></p>
-    <p><strong>사용자 정보:</strong> <span id="user-agent">불러오는 중...</span></p>
+    <div id="login-container">
+        <h1>♠️ 트럼프 카드 게임 ♦️</h1>
+        <p>로그인하고 게임을 시작하세요!</p>
+        <div data-netlify-identity-menu></div>
+        <div id="user-status" style="margin-top: 20px; font-weight: bold;"></div>
+    </div>
 
     <script>
-        // IP 주소 가져오기
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('ip-address').textContent = data.ip;
-            })
-            .catch(error => {
-                console.error('IP 주소를 가져오는 데 실패했습니다.', error);
-                document.getElementById('ip-address').textContent = '가져올 수 없음';
-            });
+        // 로그인 상태에 따라 다른 메시지를 보여줍니다.
+        const userStatusEl = document.getElementById('user-status');
+        
+        netlifyIdentity.on('login', user => {
+            console.log('Logged in', user);
+            // 로그인이 성공하면 게임 페이지로 이동하는 링크를 보여줍니다.
+            userStatusEl.innerHTML = `환영합니다, ${user.user_metadata.full_name || user.email}님! <br><br> <a href="/game.html">게임 시작하기</a>`;
+            // 또는 자동으로 페이지를 이동시킬 수도 있습니다.
+            // window.location.href = '/game.html';
+        });
 
-        // 사용자 User Agent 정보 가져오기
-        const userAgent = navigator.userAgent;
-        document.getElementById('user-agent').textContent = userAgent;
+        netlifyIdentity.on('logout', () => {
+            console.log('Logged out');
+            userStatusEl.innerHTML = '';
+        });
     </script>
-
-  
 </body>
 </html>
